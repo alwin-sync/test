@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+        }
+        #gameContainer {
+            position: relative;
+        }
+        canvas {
+            background: #fff;
+            border: 2px solid #333;
+        }
+        #score {
+            margin: 10px;
+            font-size: 24px;
+            color: #333;
+        }
+        #gameOver {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            display: none;
+            flex-direction: column;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <div id="gameContainer">
+        <canvas id="game" width="400" height="400"></canvas>
+        <div id="gameOver">
+            <div>Game Over</div>
+            <button id="restartBtn">Restart</button>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const gameOverEl = document.getElementById('gameOver');
+        const restartBtn = document.getElementById('restartBtn');
+
+        const gridSize = 20; // number of cells per row/col
+        const tileSize = canvas.width / gridSize;
+        let snake, direction, food, score, intervalId;
+
+        function init() {
+            snake = [{x: 10, y: 10}];
+            direction = {x: 0, y: 0};
+            placeFood();
+            score = 0;
+            scoreEl.textContent = 'Score: ' + score;
+            gameOverEl.style.display = 'none';
+            clearInterval(intervalId);
+            intervalId = setInterval(gameLoop, 100);
+        }
+
+        function placeFood() {
+            food = {
+                x: Math.floor(Math.random() * gridSize),
+                y: Math.floor(Math.random() * gridSize)
+            };
+        }
+
+        function gameLoop() {
+            const head = {...snake[0]};
+            head.x += direction.x;
+            head.y += direction.y;
+
+            // wrap around
+            if (head.x < 0 || head.x >= gridSize || head.y < 0 || head.y >= gridSize || collision(head)) {
+                endGame();
+                return;
+            }
+
+            snake.unshift(head);
+
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                scoreEl.textContent = 'Score: ' + score;
+                placeFood();
+            } else {
+                snake.pop();
+            }
+
+            draw();
+        }
+
+        function collision(cell) {
+            return snake.some(segment => segment.x === cell.x && segment.y === cell.y);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // draw food
+            ctx.fillStyle = 'red';
+            ctx.fillRect(food.x * tileSize, food.y * tileSize, tileSize, tileSize);
+
+            // draw snake
+            ctx.fillStyle = '#333';
+            snake.forEach((segment, index) => {
+                ctx.fillRect(segment.x * tileSize, segment.y * tileSize, tileSize, tileSize);
+            });
+        }
+
+        function endGame() {
+            clearInterval(intervalId);
+            gameOverEl.style.display = 'flex';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp': if (direction.y === 0) direction = {x: 0, y: -1}; break;
+                case 'ArrowDown': if (direction.y === 0) direction = {x: 0, y: 1}; break;
+                case 'ArrowLeft': if (direction.x === 0) direction = {x: -1, y: 0}; break;
+                case 'ArrowRight': if (direction.x === 0) direction = {x: 1, y: 0}; break;
+            }
+        });
+
+        restartBtn.addEventListener('click', init);
+        init();
+    </script>
+</body>
+</html>
